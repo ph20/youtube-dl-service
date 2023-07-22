@@ -1,0 +1,13 @@
+# dotenv files
+.env
+# Python virtualenv dirs
+venv
+# Visual Studio Code IDE configs
+.vscode
+# PyCharm IDE configs
+.idea
+### Python template
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
