@@ -21,7 +21,7 @@ def change_dir(destination):
 
 
 def run_local(chalice_app_dir):
-    sys.argv = ['chalice', 'local', '--port', '5001', '--stage', 'dev']
+    sys.argv.extend(['local', '--no-autoreload', '--port=5001', '--stage=dev'])
     # change working directory to the
     with change_dir(chalice_app_dir):
         chalice.cli.main()
