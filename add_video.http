@@ -1,0 +1,20 @@
+### Send request for adding video
+POST http://127.0.0.1:5001/video
+Content-Type: application/x-www-form-urlencoded
+
+url=https%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3DzJSDIwjfmYk
+
+### Send request for adding video https://www.youtube.com/watch?v=DFoEd13AB68
+POST http://127.0.0.1:5001/video
+Content-Type: application/x-www-form-urlencoded
+
+url=https%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3DDFoEd13AB68
+
+### Send request for adding video
+POST https://uz5za5g872.execute-api.us-east-1.amazonaws.com/api/video
+Content-Type: application/x-www-form-urlencoded
+
+url=https%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3DDFoEd13AB68
+
+### Send request for adding video
+GET http://127.0.0.1:5001/health
