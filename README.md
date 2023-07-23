@@ -1,24 +1,24 @@
-# This is simple lambda for downloading video from youtube and other resources
-## Deploy application
-### prepare build environment:
-install python3.10 and virtualenv package.
-Install aws-cli and configure it.
-Install terraform and configure it.
-Install virtual environment and install requirements
+# A Simple Lambda for Downloading Videos from YouTube and Other Resources
+## Deploy Application
+### Prepare Build Environment:
+- Install Python 3.10 and the virtualenv package.
+- Install aws-cli and configure it.
+- Install terraform and configure it.
+- Create a virtual environment and install the requirements:
 ```bash
 python3 -m virtualenv build-venv
 source build-venv/bin/activate
 pip install -r requirements-build.txt
 deactivate
 ```
-### Deploy infrastructure and lambda
+### Deploy Infrastructure and Lambda:
 ```bash
 cd infra
 terraform init
 terraform apply
 cd ..
 ```
-### Deploy lambda
+### Deploy Lambda
 ```bash
 source build-venv/bin/activate
 CHALICE_APP_DIR=youtube-dl-api ./bin/deploy.sh
@@ -26,7 +26,7 @@ deactivate
 ```
 
 ## Usage
-### Add new video to download
+### Add new video for downloading
 ```bash
 curl --data-urlencode 'url=https://www.youtube.com/watch?v=DFoEd13AB68' https://<api-gateway-url>/video
 ```
