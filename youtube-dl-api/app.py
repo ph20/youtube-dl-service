@@ -12,12 +12,15 @@ from chalicelib.downloader import get_payload, get_video_info, download_video
 from chalicelib.downloader import YoutubeDLDownloadError
 from chalicelib.utils import json_to_base64_gzip_compressed, base64_gzip_compressed_to_json
 
+S3_BUCKET_NAME = 'youtube-dl-service'
+
 
 app = Chalice(app_name='youtube-dl-api')
 # Create a low-level service clients
 lambda_client = boto3.client('lambda')
 s3_client = boto3.client('s3')
-S3_BUCKET_NAME = 'youtube-dl-service'
+dynamodb_client = boto3.resource('dynamodb')
+table = dynamodb_client.Table('videosInfo')
 
 
 def generate_resigned_url(object_key, expiration=3600):
@@ -39,8 +42,6 @@ def put_video_data(info: dict, dump_uri: str = ''):
     Puts video information into DynamoDB.
     """
     # generate a unique UUID for each new video info
-    dynamodb_client = boto3.resource('dynamodb')
-    table = dynamodb_client.Table('videosInfo')
     info = dict(info)
     if 'uuid' in info:
         uuid_str = info['uuid']
@@ -63,8 +64,6 @@ def get_video_data(uuid_str: str):
     """
     Retrieves video information from DynamoDB using uuid.
     """
-    dynamodb_client = boto3.resource('dynamodb')
-    table = dynamodb_client.Table('videosInfo')
 
     try:
         response = table.get_item(Key={'uuid': uuid_str})
@@ -153,7 +152,18 @@ def get_video_api(uuid):
     return {'status': 'ok', 'data': data}
 
 
-@app.route('/video/download/{uuid}', methods=['GET'])
+@app.route('/video/{uuid}/status', methods=['GET'])
+def get_video_status_api(uuid):
+    """
+    Retrieves video information from DynamoDB using uuid.
+    """
+    data, _ = get_video_data(uuid)
+    if not data:
+        return {'status': 'error', 'message': 'video not found'}
+    return {'status': 'ok', 'data': {'status': data['status'], 'uuid': data['uuid']}}
+
+
+@app.route('/video/{uuid}/download', methods=['GET'])
 def get_videos_download_api(uuid):
     """
     Retrieves video information from DynamoDB using uuid.
@@ -163,4 +173,18 @@ def get_videos_download_api(uuid):
         return {'status': 'error', 'message': 'video not found'}
     if dump_uri:
         dump_uri = generate_resigned_url(dump_uri)
-    return {'status': 'ok', 'data': {'url': dump_uri or None}}
+    return {'status': 'ok', 'data': {'download_url': dump_uri or None}}
+
+
+@app.route('/video/{uuid}', methods=['DELETE'])
+def delete_video_api(uuid):
+    """
+    Retrieves video information from DynamoDB using uuid.
+    """
+    data, dump_video = get_video_data(uuid)
+    if dump_video:
+        s3_client.delete_object(Bucket=S3_BUCKET_NAME, Key=dump_video)
+    if not data:
+        return {'status': 'error', 'message': 'video not found'}
+    table.delete_item(Key={'uuid': uuid})
+    return {'status': 'ok', 'message': 'video deleted'}
