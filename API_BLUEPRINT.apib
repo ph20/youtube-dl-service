@@ -1,0 +1,108 @@
+FORMAT: 1A
+HOST: https://<api-gateway-url>
+
+# Video Downloader Service
+
+This is a simple API allowing users to manage video downloads from YouTube.
+
+# Group Video
+
+## Video Collection [/video]
+
+### Add new video for downloading [POST]
+
++ Request (application/x-www-form-urlencoded)
+
+    + Body
+
+            url=https://www.youtube.com/watch?v=DFoEd13AB68
+
++ Response 200 (application/json)
+
+    + Body
+
+            {
+              "status": "ok",
+              "data": {
+                "uuid": "68ac548a-6589-4d8a-8cd8-3c8086ca1646",
+                "title": "Sample MP4 Video File for Testing",
+                "description": "",
+                "duration": 31,
+                "url": "https://www.youtube.com/watch?v=DFoEd13AB68",
+                "status": "not downloaded"
+              }
+            }
+
+## Video Entity [/video/{uuid}]
+
++ Parameters
+
+    + uuid: `68ac548a-6589-4d8a-8cd8-3c8086ca1646` (required) - An identifier for the video
+
+### Get video info [GET]
+
++ Response 200 (application/json)
+
+    + Body
+
+            {
+              "status": "ok",
+              "data": {
+                "title": "Sample MP4 Video File for Testing",
+                "description": "",
+                "duration": 31,
+                "url": "https://www.youtube.com/watch?v=DFoEd13AB68",
+                "status": "downloaded",
+                "uuid": "68ac548a-6589-4d8a-8cd8-3c8086ca1646"
+              }
+            }
+
+### Delete video [DELETE]
+
++ Response 200 (application/json)
+
+    + Body
+
+            {
+              "status": "ok",
+              "message": "video deleted"
+            }
+
+## Video Status Entity [/video/{uuid}/status]
+
++ Parameters
+
+    + uuid: `68ac548a-6589-4d8a-8cd8-3c8086ca1646` (required) - An identifier for the video
+
+### Get video download status [GET]
+
++ Response 200 (application/json)
+
+    + Body
+
+            {
+              "status": "ok",
+              "data": {
+                "status": "downloaded",
+                "uuid": "68ac548a-6589-4d8a-8cd8-3c8086ca1646"
+              }
+            }
+
+## Video Download Entity [/video/{uuid}/download]
+
++ Parameters
+
+    + uuid: `68ac548a-6589-4d8a-8cd8-3c8086ca1646` (required) - An identifier for the video
+
+### Get video download link [GET]
+
++ Response 200 (application/json)
+
+    + Body
+
+            {
+              "status": "ok",
+              "data": {
+                "download_url": "<s3-download-url>"
+              }
+            }
