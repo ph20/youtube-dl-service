@@ -15,17 +15,12 @@ resource "aws_dynamodb_table" "youtube_dl" {
   name           = "videosInfo"
   billing_mode   = "PAY_PER_REQUEST"
   hash_key       = "uuid"
-  range_key      = "url"
 
   attribute {
     name = "uuid"
     type = "S"
   }
 
-  attribute {
-    name = "url"
-    type = "S"
-  }
 
   ttl {
     attribute_name = "TimeToExist"

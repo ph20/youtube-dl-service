@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import dataclasses
+import uuid
 import os
 from glob import glob
 
@@ -23,12 +24,12 @@ VIDEO_STATUSES = [
 
 @dataclasses.dataclass
 class VideoInfo:
+    uuid: str
     title: str
     description: str
     duration: int
     url: str
     status: str
-    id: int = None
 
     def dict(self):
         return dataclasses.asdict(self)
@@ -42,6 +43,7 @@ def get_payload(url):
 
 def get_video_info(payload) -> VideoInfo:
     video_info = VideoInfo(
+        uuid=str(uuid.uuid4()),
         title=payload['title'],
         description=payload['description'],
         duration=payload['duration'],
