@@ -2,6 +2,7 @@
 .env
 # Python virtualenv dirs
 venv
+build-venv
 # Visual Studio Code IDE configs
 .vscode
 # PyCharm IDE configs

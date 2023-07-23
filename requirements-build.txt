@@ -1,1 +1,4 @@
 chalice==1.29.0
+boto3==1.28.9
+simplejson==3.19.1
+https://github.com/ph20/youtube-dl/releases/download/v2023.07.20/youtube_dl-2023.7.20-py2.py3-none-any.whl
