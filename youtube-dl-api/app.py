@@ -17,9 +17,24 @@ app = Chalice(app_name='youtube-dl-api')
 # Create a low-level service clients
 lambda_client = boto3.client('lambda')
 s3_client = boto3.client('s3')
+S3_BUCKET_NAME = 'youtube-dl-service'
 
 
-def put_video_data(url: str, info: dict):
+def generate_resigned_url(object_key, expiration=3600):
+    try:
+        response = s3_client.generate_presigned_url(
+            ClientMethod='get_object',
+            Params={'Bucket': S3_BUCKET_NAME, 'Key': object_key},
+            ExpiresIn=expiration
+        )
+    except ClientError as e:
+        print(e)
+        return None
+
+    return response
+
+
+def put_video_data(info: dict, dump_uri: str = ''):
     """
     Puts video information into DynamoDB.
     """
@@ -37,7 +52,7 @@ def put_video_data(url: str, info: dict):
     table.put_item(
        Item={
             'uuid': uuid_str,
-            'url': url,
+            'dump_uri': dump_uri,
             'value': value  # new attribute
         }
     )
@@ -60,7 +75,7 @@ def get_video_data(uuid_str: str):
         item = response.get('Item', {})
         data = json.loads(item.get('value', '{}'))
         data.update({'uuid': item.get('uuid', '')})
-        return data
+        return data, item.get('dump_uri', '')
 
 
 @app.route('/')
@@ -78,20 +93,23 @@ def download_video_api(event, context):
     video_payload = base64_gzip_compressed_to_json(event['video_payload'])
 
     # update video status to 'downloading'
-    info = get_video_data(event['uuid'])
+    uuid_str = event['uuid']
+    info, _ = get_video_data(uuid_str)
     info['status'] = 'downloading'
-    put_video_data(info['url'], info)
+    put_video_data(info)
 
     files_list = download_video(video_payload)
+    dump_uri = ''
     for file_path in files_list:
-        s3_client.upload_file(file_path, 'youtube-dl-service', os.path.basename(file_path))
+        dump_uri = uuid_str + '/' + os.path.basename(file_path)
+        s3_client.upload_file(file_path, S3_BUCKET_NAME, dump_uri)
 
     # update video status to 'downloading'
-    info = get_video_data(event['uuid'])
+    info, _ = get_video_data(event['uuid'])
     info['status'] = 'downloaded'
-    put_video_data(info['url'], info)
+    put_video_data(info, dump_uri=dump_uri)
 
-    return {'status': 'ok', 'data': {'files': files_list}}
+    return {'status': 'ok', 'data': {'dump_uri': dump_uri}}
 
 
 @app.route('/video',
@@ -111,7 +129,7 @@ def video_add_api():
     except YoutubeDLDownloadError as e:
         return {'status': 'error', 'message': str(e)}
     info = get_video_info(video_payload)
-    uuid_str = put_video_data(video_url, info.dict())
+    uuid_str = put_video_data(info.dict())
     response = lambda_client.invoke(
         FunctionName='youtube-dl-api-dev-download-video',
         InvocationType='Event',
@@ -129,7 +147,20 @@ def get_video_api(uuid):
     """
     Retrieves video information from DynamoDB using uuid.
     """
-    data = get_video_data(uuid)
+    data, _ = get_video_data(uuid)
     if not data:
         return {'status': 'error', 'message': 'video not found'}
     return {'status': 'ok', 'data': data}
+
+
+@app.route('/video/download/{uuid}', methods=['GET'])
+def get_videos_download_api(uuid):
+    """
+    Retrieves video information from DynamoDB using uuid.
+    """
+    data, dump_uri = get_video_data(uuid)
+    if not data:
+        return {'status': 'error', 'message': 'video not found'}
+    if dump_uri:
+        dump_uri = generate_resigned_url(dump_uri)
+    return {'status': 'ok', 'data': {'url': dump_uri or None}}
