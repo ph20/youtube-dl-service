@@ -1,0 +1,40 @@
+@startuml
+actor "REST API Client" as Client
+participant "API Gateway (Video Service)" as VideoService
+participant "Asynchronous Download Lambda" as DownloadLambda
+database "DynamoDB (Video Metadata)" as DynamoDB
+database "S3 (Video Storage)" as S3
+participant "External Video Hosting" as VideoHosting
+
+Client -> VideoService : POST /video (url)
+activate VideoService
+VideoService -> VideoHosting : Fetch video info
+activate VideoHosting
+VideoHosting --> VideoService : Return video info
+deactivate VideoHosting
+VideoService -> DynamoDB : Store video info
+activate DynamoDB
+DynamoDB --> VideoService : Return response (uuid)
+deactivate DynamoDB
+VideoService -> DownloadLambda : Invoke (video_payload, uuid) asynchronously
+VideoService --> Client : Return response (status, data)
+deactivate VideoService
+activate DownloadLambda
+DownloadLambda -> DynamoDB : Update video status to 'downloading'
+activate DynamoDB
+DynamoDB --> DownloadLambda : Return response
+deactivate DynamoDB
+DownloadLambda -> VideoHosting : Download video
+activate VideoHosting
+VideoHosting --> DownloadLambda : Return video file
+deactivate VideoHosting
+DownloadLambda -> S3 : Upload video file
+activate S3
+S3 --> DownloadLambda : Return response
+deactivate S3
+DownloadLambda -> DynamoDB : Update video status to 'downloaded'
+activate DynamoDB
+DynamoDB --> DownloadLambda : Return response
+deactivate DynamoDB
+deactivate DownloadLambda
+@enduml

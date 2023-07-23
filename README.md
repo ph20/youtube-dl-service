@@ -1,4 +1,30 @@
 # A Simple Lambda for Downloading Videos from YouTube and Other Resources
+
+## Overview
+The Video Service API is a cloud-based application designed to fetch video information from an external video hosting service, store the video metadata in DynamoDB, download the video, and store it in an S3 bucket. It leverages AWS services like API Gateway, Lambda, DynamoDB, and S3. The service is built with a RESTful architecture, making it easy for clients to interact with it.
+
+## How It Works
+1. A client sends a `POST /video` request to the Video Service with a video URL.
+2. The Video Service fetches video information from the external video hosting service and stores it in the DynamoDB table.
+3. After storing the video info, the Video Service invokes a Lambda function asynchronously for the video download operation and immediately responds back to the client with a status message and data (including a unique identifier, `uuid` for the video).
+4. The Asynchronous Download Lambda function updates the video status to 'downloading' in DynamoDB and starts downloading the video from the external video hosting service.
+5. After downloading the video, the Lambda function uploads it to the S3 bucket.
+6. Once the video upload is successful, the Lambda function updates the video status to 'downloaded' in DynamoDB.
+
+The client can also interact with the API to get video information, get video status, get the video download URL, and delete a video using appropriate endpoints and HTTP methods.
+
+## Interaction Diagram
+The sequence diagram below provides an overview of the interactions between different components during a video download process:
+![UML_SEQUENCE.png](UML_SEQUENCE.png)
+
+## Technology Stack
+- **AWS Lambda:** For running the service and download logic without provisioning or managing servers.
+- **AWS API Gateway:** For accepting and processing concurrent API calls.
+- **AWS DynamoDB:** For storing video metadata and status information.
+- **AWS S3:** For storing downloaded videos.
+- **Python:** The core application logic is written in Python.
+- **Chalice:** A Python framework used for serverless applications on AWS.
+
 ## Deploy Application
 ### Prepare Build Environment:
 - Install Python 3.10 and the virtualenv package.
